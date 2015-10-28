@@ -39,26 +39,25 @@
 
   ;; (>!!-n (async/chan) 1)
 
-  (-> (chan 1)
-      (>!!-n 1)
-      (<!!-n 1))
+  (let [ch (chan 1)]
+    (>!!-n ch 1)
+    (<!!-n ch 1))
 
-  (-> (chan 3)
-      (>!!-n 3)
-      (<!!-n 2)
-      ;; (take-n 2)
-      (<!!-n 1))
+  (let [ch (chan 3)]
+    (>!!-n ch 3)
+    (<!!-n ch 2)
+    (<!!-n ch 1))
 
-  (-> (chan 42)
-      (>!!-n 3)
-      (<!!-n 2)
-      ;; (take-n 2)
-      (<!!-n 1))
+  (let [ch (chan 42)]
+    (>!!-n ch 3)
+    (<!!-n ch 2)
+    (<!!-n ch 1))
+
   ;; Can I put any number of vals in a fixed buffered channel?
   ;; Yes and no
-  (-> (chan 3343)
-      (>!!-n 200)
-      (<!!-n 150))
+  (let [ch (chan 3343)]
+    (>!!-n ch 200)
+    (<!!-n ch 150))
 
   ;; ## Sliding buffer (size = 2)
   ;; [_ 0]
@@ -66,31 +65,31 @@
   ;;     [1 2]
   ;;       [2 3]
   ;;    0 1 2 3 ...
-  (-> (chan (sliding-buffer 2))
+  (let [ch (chan (sliding-buffer 2))]
 
-      (>!!-n 3)
-      (<!!-n 2)
+    (>!!-n ch 3)  ;; [0], [0, 1], [1, 2]
+    (<!!-n ch 2)  ;; [1, 2] <- []
 
-      (>!!-n 7)
-      (<!!-n 1)
+    (>!!-n ch 7)  ;; [0], [0, 1], [1, 2], ..., [5, 6]
+    (<!!-n ch 1)  ;; 5 <- [6]
 
-      (>!!-n 1)
-      (<!!-n 1))
+    (>!!-n ch 1)  ;; [6, 0]
+    (<!!-n ch 1)) ;; 6 <- [0]
 
   ;; ## Dropping buffer
   ;;  [_ _ _ _ _]
   ;;   0 1 2 3 4 5 6 7 8 ...
   ;;             |-> dropped
-  (-> (chan (dropping-buffer 5))
+  (let [ch (chan (dropping-buffer 5))]
 
-      (>!!-n 5)
-      (<!!-n 1)
+    (>!!-n ch 5)  ;; [0, 1, 2, 3, 4]
+    (<!!-n ch 1)  ;; 0 <- [1, 2, 3, 4]
 
-      (>!!-n 15)
-      (<!!-n 2)
+    (>!!-n ch 15) ;; [1, 2, 3, 4, 0]
+    (<!!-n ch 2)  ;; [1, 2] <- [3, 4, 0]
 
-      (>!!-n 10)
-      (<!!-n 5))
+    (>!!-n ch 10) ;; [3, 4, 0, 0, 1]
+    (<!!-n ch 5)) ;; [3, 4, 0, 0, 1] <- []
   )
 
 ;; Go blocks - Parking put & take
@@ -163,8 +162,6 @@
 
   )
 
-
-
 ;; Peeking into the go macro
 (comment
 
@@ -172,3 +169,7 @@
    (macroexpand-1 '(go (<! (chan)))))
 
   )
+
+;; ## Links
+;; Core Async Go Macro Internal - Part 1 [https://www.youtube.com/watch?v=R3PZMIwXN_g]
+;; Clojure core.async Channels - [http://clojure.com/blog/2013/06/28/clojure-core-async-channels.html]

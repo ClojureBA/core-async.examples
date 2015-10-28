@@ -37,7 +37,7 @@
     (mapv #(async/sub (:pub press) %1 %2) topics chans)
     (go-loop []
       (when-let [[val _] (async/alts! chans)]
-        (println "\n===> Reading:" val "\n")
+        (println "\n===> Reading:" val "\n\n")
         (recur)))))
 
 (defn generate-publications [press]
