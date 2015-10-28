@@ -40,7 +40,7 @@
         (when (and (< n MAX-WAZZUPS) sender)
           (>! out [name (wazzup n)])
 
-          (println [name] (- MAX-WAZZUPS n) "has WAZUPS left")
+          (println [name] "has" (- MAX-WAZZUPS n) " WAZUPS left")
           (when (< n MAX-WAZZUPS)
             (<! (async/timeout (rand-int 5000))))
 

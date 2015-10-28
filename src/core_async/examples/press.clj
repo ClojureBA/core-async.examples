@@ -2,8 +2,7 @@
   (:require [clojure.core.async
              :as async
              :refer [<!! >!! <! >!
-                     chan sliding-buffer dropping-buffer
-                     go chan go-loop]]
+                     alts! chan go-loop]]
             [clojure.repl :refer [source doc]]
             [clojure.string :as str]
             [clojure.set :refer [intersection]]))
@@ -37,25 +36,29 @@
     (mapv #(async/sub (:pub press) %1 %2) topics chans)
     (go-loop []
       (when-let [[val _] (async/alts! chans)]
-        (println "\n===> Reading:" val "\n")
+        (println "\n===> Reading:" val "\n\n")
         (recur)))))
 
 (defn generate-publications [press]
-  (go-loop []
-    (let [p (rand-publication)]
-      (println "Fresh from the press" p)
-      (>! (:chan press) p)
-      (<! (async/timeout 1000))
-      (recur))))
+  (let [in (chan)]
+    (go-loop []
+      (let [p      (rand-publication)
+            [_ ch] (alts! [in (async/timeout 1000)])]
+        (println "Fresh from the press" p)
+        (>! (:chan press) p)
+        (when-not (= ch in)
+          (recur))))
+    in))
 
 (comment
 
   (def press (create-press))
-  (generate-publications press)
+  (def printing (generate-publications press))
 
   (read-about press #{:politics})
   (read-about press #{:economy :sports})
   (read-about press #{:entertainment})
-  ;; (async/close! (:chan press))
+
+  (>!! printing :stop)
 
   )
